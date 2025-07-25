@@ -1,0 +1,413 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "v1",
+        "title": "Cloud Foundry Producer API",
+        "description": "Use the Alert Notification Producer API as a means to post custom events regarding your application. Those events could be the reflection of important to the business and operations things that happen within the application.\n\nIn Alert Notification, events are divided in three categories:\n* Alert\n* Notification\n* Exception\n\nIn addition, severity and priority can be adjusted according to your needs. Take a look in the model tab of the post request where all possible properties for the event description are listed. Alert Notification gives you the option to extend those properties if needed by adding your own tags in the tags object at the end."
+    },
+    "x-sap-shortText": "Allows posting custom events that can be consumed in a system of choice defined in your subscriptions.",
+    "x-servers": [{
+        "url": "https://clm-sl-ans-live-ans-service-api.cfapps.{region}.hana.ondemand.com",
+        "description": "Alert Notification endpoints",
+        "templates": {
+            "region": {
+                "enum": [
+                    "eu10",
+                    "us10",
+                    "jp10",
+                    "eu20",
+                    "ap11",
+                    "ap10",
+                    "br10",
+                    "ca10",
+                    "us20",
+                    "us21",
+                    "us30",
+                    "jp20",
+                    "ap21",
+                    "eu11",
+                    "ap12",
+                    "ap20",
+                    "eu30",
+                    "in30",
+                    "ch20",
+                    "sa31"
+                ],
+                "default": "eu10",
+                "description": "Landscape region"
+            }
+        }
+    }],
+    "securityDefinitions": {
+        "OAuth2": {
+            "type": "oauth2",
+            "flow": "application",
+            "scopes": {
+                "<PREFIX>.ans.cp_alert_write": "Allows posting events on the API. The 'PREFIX' placeholder is set according to the landscape."
+
+            },
+            "tokenUrl": "https://{cf-subaccount-subdomain}.authentication.{region}.hana.ondemand.com/oauth/token?grant_type=client_credentials",
+            "description": "Producer API is secured by the OAuth 2.0 Client Credentials Grant type (with JWT)."
+        },
+        "Basic": {
+            "type": "basic",
+            "description": "Producer API is secured by Basic Authentication. Required permission is 'ans.cp_alert_write'"
+        }
+    },
+    "security": [{
+        "OAuth2": [
+            "<PREFIX>.ans.cp_alert_write"
+        ]
+    }, {
+        "Basic": []
+    }],
+    "externalDocs": {
+        "description": "Producer API documentation",
+        "url": "https://help.sap.com/viewer/5967a369d4b74f7a9c2b91f5df8e6ab6/Cloud/en-US/04c9ed027b824e93896f59c4081a704a.html"
+    },
+    "host": "hostname",
+    "basePath": "/",
+    "schemes": ["https"],
+    "consumes": ["application/json;charset=utf-8"],
+    "produces": ["application/json;charset=utf-8"],
+    "paths": {
+        "/cf/producer/v1/resource-events": {
+            "post": {
+                "description": "Use this endpoint to post an event regarding any of your applications. You can post just a single event or also you have the possibility to create a chain of stateful events using the special \"ans:\" prefixed tags. Once the event is received by Alert Notification, it is delivered to each channel you have already defined - e-mail, Slack, webhook, etc.",
+                "summary": "Post an event to stay informed whenever something important happens in your application",
+                "tags": ["Resource Events"],
+                "operationId": "postResourceEvent",
+                "parameters": [{
+                    "name": "event",
+                    "in": "body",
+                    "required": true,
+                    "description": "Here the event is described - where it has occurred and how important is it. You can include any detail you need to react appropriately. Those properties can be used for defining how the event is processed when received by Alert Notification.",
+                    "schema": {
+                        "$ref": "#/definitions/CustomerResourceEvent"
+                    }
+                }],
+                "responses": {
+                    "202": {
+                        "description": "Successful event post. The event is accepted from the system and is queued for processing.",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerResourceEvent"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access. Provide a valid access token",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerProducerUnauthorizedApiError"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests - the request rate limit has been reached. <br/> Applicable quota for posting resource events <b><i> (based on Service Plan) </i></b>: <br/> Standard Plan: <br/> &nbsp;&nbsp; - Per Minute: 500 events  <br/> Free Plan: <br/> &nbsp;&nbsp; - Per Month: 5000 events <br/> Instance in Trial Subaccount: <br/> &nbsp;&nbsp; - Per Minute: 50 events <br/> &nbsp;&nbsp; - Per Month: 3000 events",
+                        "schema": {
+                            "$ref": "#/definitions/TooManyRequestsApiError"
+                        }
+                    },
+                    "default": {
+                        "description": "HTTP status codes 400, 403, 411, 413, 423, 500 or 503. Response body contains further details.",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerProducerApiError"
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2": ["<PREFIX>.ans.cp_alert_write"]
+                }, {
+                    "Basic": []
+                }]
+            }
+        },
+        "/cf/producer/v1/resource-events-batch": {
+            "post": {
+                "description": "Use this endpoint to post events regarding any of your applications. You can post a list that contains multiple events. You can also create a chain of stateful events by using the special \"ans:\" prefixed tags. Once the event is received by Alert Notification, it is delivered to each channel that you have already defined. For example, e-mail, Slack, webhook, and so on.",
+                "summary": "Post events to stay informed whenever something important happens in your application",
+                "tags": ["Resource Events Batch"],
+                "operationId": "postResourceEventsBatch",
+                "parameters": [{
+                    "name": "events",
+                    "in": "body",
+                    "required": true,
+                    "description": "Description of the events. For example, where they have occurred and how important they are. You can include any details that you need to react appropriately. Those properties can be used for defining how the event is processed when received by Alert Notification.",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/CustomerResourceEvent"
+
+                        }
+                    }
+                }],
+                "responses": {
+                    "202": {
+                        "description": "Successful events post. The events are accepted by the system and are queued for processing.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/CustomerResourceEvent"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access. Provide a valid access token",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerProducerUnauthorizedApiError"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests - the request rate limit has been reached. <br/> Applicable quota for posting resource events <b><i> (based on Service Plan) </i></b>: <br/> Standard Plan: <br/> &nbsp;&nbsp; - Per Minute: 500 events  <br/> Free Plan: <br/> &nbsp;&nbsp; - Per Month: 5000 events <br/> Instance in Trial Subaccount: <br/> &nbsp;&nbsp; - Per Minute: 50 events <br/> &nbsp;&nbsp; - Per Month: 3000 events",
+                        "schema": {
+                            "$ref": "#/definitions/TooManyRequestsApiError"
+                        }
+                    },
+                    "500": {
+                        "description": "An error has occured when ingesting some or all of the provided events. The accepted and rejected events by the system can be found inside the error payload.",
+                        "schema": {
+                            "$ref": "#/definitions/BatchProducerApiError"
+                        }
+                    },
+                    "default": {
+                        "description": "HTTP status codes 400, 403, 411, 413, 423 or 503. Response body contains further details.",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerProducerApiError"
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2": ["<PREFIX>.ans.cp_alert_write"]
+                }, {
+                    "Basic": []
+                }]
+            }
+        }
+    },
+    "definitions": {
+        "CustomerResourceEvent": {
+            "title": "CustomerResourceEvent",
+            "description": "**Note:** Properties like region, globalAccount, subAccount and resourceGroup are filled automatically by Alert Notification.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID generated on an acceptance criterion by the service. It is used for traceability of the event status.",
+                    "type": "string"
+                },
+                "eventType": {
+                    "description": "Identifies the cause of an alert in the context of an affected resource. For example: HighCpuUsage, NotWorkingExternalDependency. The types must be meaningful for the user and should distinguish the event.",
+                    "type": "string",
+                    "pattern": ".*\\S.*"
+                },
+                "eventTimestamp": {
+                    "description": "The timestamp that specifies when the event was created in the source. This property uses the Unix timestamp format (seconds since January 1st, 1970 at UTC)",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "severity": {
+                    "description": "Represents the event impact in the context of the affected resource. The possible values are (from low to high level of impact) - \"INFO\", \"NOTICE\", \"WARNING\", \"ERROR\", \"FATAL\".",
+                    "type": "string",
+                    "enum": [
+                        "INFO",
+                        "NOTICE",
+                        "WARNING",
+                        "ERROR",
+                        "FATAL"
+                    ]
+                },
+                "category": {
+                    "description": "A property that identifies the category of the event. Common use cases for the possible values are: \nALERT - when the problem does not impact the workflow of the resource, but for example impacts its performance. It could be related to a resource dependency, which might be source of the problem.\nNOTIFICATION - contains useful information about the state of the resource or its dependencies. For example, this can be an update, a planned downtime taking place, and so on. \nEXCEPTION - when the problem is related to some abnormal worklfow in the resource.",
+                    "type": "string",
+                    "enum": ["ALERT",
+                        "NOTIFICATION",
+                        "EXCEPTION"
+                    ]
+                },
+                "subject": {
+                    "description": "A meaningful title, which would be used as an email subject, an issue title, and so on.",
+                    "type": "string",
+                    "pattern": ".*\\S.*"
+                },
+                "body": {
+                    "description": "A meaningful description of the alert with sufficient details, which would be used as an email body, an issue content, and so on.",
+                    "type": "string",
+                    "pattern": ".*\\S.*"
+                },
+                "priority": {
+                    "description": "An optional property that defines the event urgency. The lower the number, the higher the priority, and the sooner the event should be reviewed.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                },
+                "tags": {
+                    "description": "Optional key-value pairs describing the event in details. It can be used for filtering purposes. Also it can contain special key-value pairs.\n\nGeneral key-value pairs (All other tags with prefix 'ans:' will be ignored when event is delivered):\n- ans:correlationId: Can be used by the sender in order to correlate this event with other activities or issues\n- ans:sapPassport: Used for correlation between different SAP systems that support SAP-PASSPORT\n- ans:sourceEventId: An ID generated by the event source. It would be used for incidents management and further stateful interactions. That is, actions on consequent events with the same ID will be related if applicable.\n- ans:status: An optional property that could be used to change statuses in incidents management systems. Enum values: 'CREATE_OR_UPDATE', 'CREATE', 'UPDATE', 'COMMENT' or 'CLOSE'.\n- ans:detailsLink: A URL that contains details for this alert to a system of your choosing. Can be link to your preferred dashboard, the Kibana data visualization plugin, the Dynatrace performance management tool, and others.\n- ans:recommendedActionLink: A URL that contains details for recommended actions regarding this alert to a system of your choosing.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "resource": {
+                    "$ref": "#/definitions/AffectedCustomerResource"
+                }
+            },
+            "required": [
+                "eventType",
+                "severity",
+                "category",
+                "subject",
+                "body",
+                "resource"
+            ],
+            "example": {
+                "eventType": "NotWorkingExternalRecommendationService",
+                "eventTimestamp": 1535618178,
+                "resource": {
+                    "resourceName": "web-shop",
+                    "resourceType": "app",
+                    "tags": {
+                        "env": "prod"
+                    }
+                },
+                "severity": "FATAL",
+                "category": "ALERT",
+                "subject": "Overloaded external dependency of My Web Shop external dependency",
+                "body": "External dependency showing recommendations does not respond on time. Stop some clients to reduce the load.",
+                "tags": {
+                    "ans:correlationId": "30118",
+                    "ans:status": "CREATE_OR_UPDATE",
+                    "customTag": "42"
+                }
+            }
+        },
+        "AffectedCustomerResource": {
+            "title": "AffectedCustomerResource",
+            "type": "object",
+            "description": "Used to uniquely identify a resource in the SAP Business Technology Platform for which this event was created. The user can filter these properties. \n\n**Note:** Properties such as globalAccount, subAccount and resourceGroup are filled automatically by Alert Notification.",
+            "properties": {
+                "resourceName": {
+                    "description": "A unique resource name used to identify an application or a back-end service, such as a database. For example: application-name, database-alias",
+                    "type": "string",
+                    "pattern": ".*\\S.*"
+                },
+                "resourceType": {
+                    "description": "Identifies the affected resource type. For example: application, database, dbms, service",
+                    "type": "string",
+                    "pattern": ".*\\S.*"
+                },
+                "resourceInstance": {
+                    "description": "If the resource has multiple instances, the exact instance will be identified.",
+                    "type": "string"
+                },
+                "tags": {
+                    "description": "Optional key-value pairs describing in details the resource. Can be used for filtering.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "resourceName",
+                "resourceType"
+            ],
+            "example": {
+                "resourceName": "x0f",
+                "resourceType": "database",
+                "tags": {
+                    "dbType": "HANA"
+                }
+            }
+        },
+        "CustomerProducerUnauthorizedApiError": {
+            "title": "CustomerProducerUnauthorizedApiError",
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "integer",
+                    "enum": [401]
+                },
+                "message": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "status",
+                "message",
+                "error",
+                "timestamp",
+                "path"
+            ]
+        },
+        "CustomerProducerApiError": {
+            "title": "CustomerProducerApiError",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "enum": [400, 411, 413, 423, 429, 503]
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "message"
+            ]
+        },
+        "TooManyRequestsApiError": {
+            "title": "CustomerProducerTooManyRequestsApiError",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "enum": [429]
+                },
+                "message": {
+                    "type": "string",
+                    "example": "API request quota exceeded. Allowed total attempts number of {requests} per {time-frame}."
+                }
+            },
+            "required": [
+                "code",
+                "message"
+            ]
+        },
+        "BatchProducerApiError": {
+            "title": "BatchProducerApiError",
+            "properties": {
+                "accepted": {
+                    "type": "array",
+                    "description": "Events that are ingested into the system for further processing. To receive such events, subscription have to be configured.",
+                    "items": {
+                        "$ref": "#/definitions/CustomerResourceEvent"
+                    }
+                },
+                "rejected": {
+                    "type": "array",
+                    "description": "Any provided event that has not been ingested into the system for further processing.",
+                    "items": {
+                        "$ref": "#/definitions/CustomerResourceEvent"
+                    }
+                },
+                "code": {
+                    "type": "integer",
+                    "enum": [500]
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "message"
+            ]
+        }
+    }
+}

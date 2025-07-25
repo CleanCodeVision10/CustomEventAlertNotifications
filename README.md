@@ -1,25 +1,8 @@
-# Getting Started
+### 🚀 Getting Started
 
-Welcome to your new project.
+The `btp-cockpit-ans-configuration` folder is **not required** within the CAP project itself. It is included **only for reference**, containing details of the ANS (Alert Notification Service) instance and its key.
 
-It contains these folders and files, following our recommended project layout:
+> 🔔 **Important:**
+> There is **no need to bind** the ANS service to the CAP application in order to capture events.
+> It is sufficient for the ANS instance to be present **at the space level** where the CAP application is deployed.
 
-File or Folder | Purpose
----------|----------
-`app/` | content for UI frontends goes here
-`db/` | your domain models and data go here
-`srv/` | your service models and code go here
-`package.json` | project metadata and configuration
-`readme.md` | this getting started guide
-
-
-## Next Steps
-
-- Open a new terminal and run `cds watch`
-- (in VS Code simply choose _**Terminal** > Run Task > cds watch_)
-- Start adding content, for example, a [db/schema.cds](db/schema.cds).
-
-
-## Learn More
-
-Learn more at https://cap.cloud.sap/docs/get-started/.

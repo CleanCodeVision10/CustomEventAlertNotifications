@@ -1,0 +1,88 @@
+{
+    "configuration": {
+        "actions": [
+            {
+                "type": "EMAIL",
+                "name": "Arish",
+                "state": "ENABLED",
+                "properties": {
+                    "destination": "aarish3521@gmail.com",
+                    "useHtml": "false"
+                }
+            },
+            {
+                "type": "STORE",
+                "name": "store-events",
+                "state": "ENABLED",
+                "description": "store-events"
+            }
+        ],
+        "conditions": [
+            {
+                "name": "app-crash-events",
+                "mandatory": false,
+                "propertyKey": "eventType",
+                "predicate": "EQUALS",
+                "propertyValue": "app.crash",
+                "labels": [],
+                "description": ""
+            },
+            {
+                "name": "application-environment-variables",
+                "mandatory": false,
+                "propertyKey": "eventType",
+                "predicate": "EQUALS",
+                "propertyValue": "audit.app.environment.show",
+                "labels": [],
+                "description": "Application-Environment-Variables"
+            },
+            {
+                "name": "custom-event-name",
+                "mandatory": false,
+                "propertyKey": "tags.customTag",
+                "predicate": "EQUALS",
+                "propertyValue": "Custom-Event-tag",
+                "labels": [],
+                "description": "custom-event-name"
+            },
+            {
+                "name": "events-for-cap-demo-srv",
+                "mandatory": true,
+                "propertyKey": "resource.resourceName",
+                "predicate": "EQUALS",
+                "propertyValue": "cap-demo-2-srv",
+                "labels": [],
+                "description": "events-cap-demo-2-srv"
+            }
+        ],
+        "subscriptions": [
+            {
+                "name": "detect-app-crash",
+                "conditions": [
+                    "app-crash-events",
+                    "application-environment-variables",
+                    "events-for-cap-demo-srv"
+                ],
+                "actions": [
+                    "Arish",
+                    "store-events"
+                ],
+                "state": "ENABLED",
+                "description": "Use to Detect App Crash and environment variables"
+            },
+            {
+                "name": "detect-custom-events",
+                "conditions": [
+                    "custom-event-name",
+                    "events-for-cap-demo-srv"
+                ],
+                "actions": [
+                    "Arish",
+                    "store-events"
+                ],
+                "state": "ENABLED"
+            }
+        ]
+    },
+    "enableCloudControllerAuditEvents": true
+}
